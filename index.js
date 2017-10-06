@@ -140,6 +140,8 @@ Fileupload.prototype.handle = function (ctx, next) {
                     debug("thumbnail found: %j", req.query[propertyName]);
                     thumbnail = (req.query[propertyName] === 'true');
                     continue; // skip to the next param since this value will be hardcoded later
+                } else if (propertyName === 'thumbnailWidth') {
+                    continue; // do not save thumbnail width
                 }
 
                 // Store any param in the object
@@ -175,9 +177,9 @@ Fileupload.prototype.handle = function (ctx, next) {
                 if (storedObject.id) delete storedObject.id;
                 if (storedObject._id) delete storedObject._id;
                 
-                if(file.thumbnailFilename && storedObject.type.includes('image')) {
+                if(thumbnail && storedObject.type.includes('image')) {
                     storedObject.thumbnail = file.thumbnailFilename
-                    sharp(path.join(uploadDir, file.name)).resize(400).toBuffer().then(function (data) {
+                    sharp(path.join(uploadDir, file.name)).resize(req.query['thumbnailWidth'] || 400).toBuffer().then(function (data) {
                         fs.writeFile(path.join(uploadDir, file.thumbnailFilename), data, function(err) {
                             if (err) return processDone(err);
                             debug("Thumbnail renamed after event.upload.run: %j", err || path.join(uploadDir, file.thumbnailFilename));
